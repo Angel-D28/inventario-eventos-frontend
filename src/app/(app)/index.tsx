@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from "@/lib/auth-context";
 
 import { AnimatedIcon } from '@/components/animated-icon';
 import { HintRow } from '@/components/hint-row';
@@ -31,6 +32,7 @@ function getDevMenuHint() {
 }
 
 export default function HomeScreen() {
+  const { cerrarSesion } = useAuth();
   const [toques, setToques] = useState(0);
   return (
     <ThemedView style={styles.container}>
@@ -62,6 +64,9 @@ export default function HomeScreen() {
 
         <Pressable style={styles.boton} onPress={() => setToques(toques + 1)}>
           <ThemedText type="code">Toques: {toques}</ThemedText>
+        </Pressable>
+        <Pressable style={styles.boton} onPress={cerrarSesion}>
+          <ThemedText type="small">Cerrar sesión</ThemedText>
         </Pressable>
 
         {Platform.OS === 'web' && <WebBadge />}

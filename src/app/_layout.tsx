@@ -1,18 +1,42 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { Stack } from 'expo-router';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { ThemedView } from '@/components/themed-view';
+import { AuthProvider, useAuth } from '@/lib/auth-context';
 
-SplashScreen.preventAutoHideAsync();
+function Navegacion() {
+  const { estado } = useAuth();
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  if (estado === 'cargando') {
+    return (
+      <ThemedView style={styles.centrado}>
+        <ActivityIndicator />
+      </ThemedView>
+    );
+  }
+
+  const conSesion = estado === 'con-sesion';
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={conSesion}>
+        <Stack.Screen name="(app)" />
+      </Stack.Protected>
+      <Stack.Protected guard={!conSesion}>
+        <Stack.Screen name="login" />
+      </Stack.Protected>
+    </Stack>
   );
 }
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <Navegacion />
+    </AuthProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  centrado: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+});
