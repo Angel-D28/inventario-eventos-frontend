@@ -32,10 +32,11 @@ type Opciones = {
 
 async function solicitar<T>(ruta: string, opciones: Opciones = {}): Promise<T> {
   const { metodo = 'GET', cuerpo, conToken = true, timeoutMs = 8000 } = opciones;
+  const token = conToken ? tokenActual : null;
 
   const cabeceras: Record<string, string> = { Accept: 'application/json' };
   if (cuerpo !== undefined) cabeceras['Content-Type'] = 'application/json';
-  if (conToken && tokenActual) cabeceras.Authorization = `Bearer ${tokenActual}`;
+  if (token) cabeceras.Authorization = `Bearer ${token}`;
 
   const controlador = new AbortController();
   const temporizador = setTimeout(() => controlador.abort(), timeoutMs);
@@ -54,10 +55,13 @@ async function solicitar<T>(ruta: string, opciones: Opciones = {}): Promise<T> {
     clearTimeout(temporizador);
   }
 
-  // Un 401 con token significa sesión vencida o inválida (no credenciales malas).
   if (respuesta.status === 401 && conToken) {
-    alExpirarSesion?.();
-    throw new ApiError('Tu sesión expiró. Inicia sesión de nuevo.', 401);
+    // "Sesión expirada" solo si ENVIAMOS un token y el servidor lo rechazó.
+    if (token) {
+      alExpirarSesion?.();
+      throw new ApiError('Tu sesión expiró. Inicia sesión de nuevo.', 401);
+    }
+    throw new ApiError('Necesitas iniciar sesión', 401);
   }
   if (!respuesta.ok) {
     throw new ApiError(await extraerMensaje(respuesta), respuesta.status);
@@ -77,7 +81,7 @@ async function extraerMensaje(respuesta: Response): Promise<string> {
   return `El servidor respondió ${respuesta.status}`;
 }
 
-// ---------- Endpoints ----------
+// ---------- Salud y sesión ----------
 
 export type Salud = { status: string };
 
@@ -95,14 +99,56 @@ export function iniciarSesionApi(username: string, password: string): Promise<To
   });
 }
 
+// ---------- Productos ----------
+
+export type TipoProducto = 'LICOR' | 'MENAJE' | 'CRISTALERIA';
+
 export type Producto = {
   id: string;
   nombre: string;
-  tipo: 'LICOR' | 'MENAJE' | 'CRISTALERIA';
+  tipo: TipoProducto;
   fotoUrl: string | null;
   activo: boolean;
 };
 
 export function listarProductos(): Promise<Producto[]> {
   return solicitar<Producto[]>('/api/productos');
+}
+
+// ---------- Eventos ----------
+
+export type EstadoEvento = 'PLANEADO' | 'RECIBIDO' | 'DEVUELTO' | 'CERRADO';
+
+export type EventoResumen = {
+  id: string;
+  nombre: string;
+  lugar: string | null;
+  fecha: string; // "2026-11-14"
+  estado: EstadoEvento;
+  planeadorId: string;
+  planeadorNombre: string;
+};
+
+export type EventoItem = {
+  productoId: string;
+  productoNombre: string;
+  tipo: TipoProducto;
+  cantidadRecibida: number;
+  cantidadDevuelta: number;
+  cantidadRota: number;
+  cantidadPerdida: number;
+  cantidadConsumida: number;
+  diferencia: number;
+  observaciones: string | null;
+};
+
+export type EventoDetalle = EventoResumen & { items: EventoItem[] };
+
+export function listarEventos(): Promise<EventoResumen[]> {
+  return solicitar<EventoResumen[]>('/api/eventos');
+}
+
+export function obtenerEvento(id: string): Promise<EventoDetalle> {
+  // El id viene de la URL de la pantalla, o sea, de fuera: se codifica por precaución.
+  return solicitar<EventoDetalle>(`/api/eventos/${encodeURIComponent(id)}`);
 }
