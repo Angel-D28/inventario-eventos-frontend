@@ -1,5 +1,7 @@
+import { EstadoServidor } from "@/components/estado-servidor";
 import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { useState } from "react";
+import { Platform, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedIcon } from '@/components/animated-icon';
@@ -29,13 +31,14 @@ function getDevMenuHint() {
 }
 
 export default function HomeScreen() {
+  const [toques, setToques] = useState(0);
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedView style={styles.heroSection}>
           <AnimatedIcon />
           <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
+            Inventario de eventos
           </ThemedText>
         </ThemedView>
 
@@ -55,6 +58,12 @@ export default function HomeScreen() {
           />
         </ThemedView>
 
+        <EstadoServidor />
+
+        <Pressable style={styles.boton} onPress={() => setToques(toques + 1)}>
+          <ThemedText type="code">Toques: {toques}</ThemedText>
+        </Pressable>
+
         {Platform.OS === 'web' && <WebBadge />}
       </SafeAreaView>
     </ThemedView>
@@ -62,6 +71,13 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  boton: {
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    borderRadius: Spacing.three,
+    borderWidth: 1,
+    borderColor: '#888',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
