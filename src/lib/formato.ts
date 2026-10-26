@@ -18,3 +18,14 @@ export const ETIQUETA_TIPO: Record<TipoProducto, string> = {
   MENAJE: 'Menaje',
   CRISTALERIA: 'Cristalería',
 };
+
+/**
+ * Date → "2026-11-14" usando la fecha LOCAL del teléfono.
+ * No uses toISOString(): convierte a UTC y, en Colombia después de las 7 p. m.,
+ * devolvería el día siguiente.
+ */
+export function aIsoLocal(fecha: Date): string {
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${fecha.getFullYear()}-${mes}-${dia}`;
+}

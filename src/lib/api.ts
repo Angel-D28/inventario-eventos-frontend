@@ -152,3 +152,34 @@ export function obtenerEvento(id: string): Promise<EventoDetalle> {
   // El id viene de la URL de la pantalla, o sea, de fuera: se codifica por precaución.
   return solicitar<EventoDetalle>(`/api/eventos/${encodeURIComponent(id)}`);
 }
+
+
+// ---------- Planeadores ----------
+
+export type Planeador = {
+  id: string;
+  nombre: string;
+  telefono: string | null;
+  notas: string | null;
+};
+
+export function listarPlaneadores(): Promise<Planeador[]> {
+  return solicitar<Planeador[]>('/api/planeadores');
+}
+
+export function crearPlaneador(nombre: string): Promise<Planeador> {
+  return solicitar<Planeador>('/api/planeadores', { metodo: 'POST', cuerpo: { nombre } });
+}
+
+// ---------- Crear evento ----------
+
+export type NuevoEvento = {
+  planeadorId: string;
+  nombre: string;
+  lugar: string | null;
+  fecha: string; // "2026-11-14"
+};
+
+export function crearEvento(datos: NuevoEvento): Promise<EventoDetalle> {
+  return solicitar<EventoDetalle>('/api/eventos', { metodo: 'POST', cuerpo: datos });
+}

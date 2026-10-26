@@ -39,12 +39,9 @@ export function useDatos<T>(cargador: () => Promise<T>) {
     void ejecutar(false);
   }, [ejecutar]);
 
-  return {
-    datos,
-    error,
-    cargando,
-    refrescando,
-    recargar: () => ejecutar(false),
-    refrescar: () => ejecutar(true),
-  };
+  // Estables entre renders: sirven como dependencias de otros hooks.
+  const recargar = useCallback(() => ejecutar(false), [ejecutar]);
+  const refrescar = useCallback(() => ejecutar(true), [ejecutar]);
+
+  return { datos, error, cargando, refrescando, recargar, refrescar };
 }

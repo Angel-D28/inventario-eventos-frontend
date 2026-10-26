@@ -1,4 +1,5 @@
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useRef } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { EstadoEventoBadge } from '@/components/estado-evento';
@@ -12,6 +13,18 @@ import { useDatos } from '@/lib/use-datos';
 export default function ListaEventos() {
   const router = useRouter();
   const { datos, error, cargando, refrescando, recargar, refrescar } = useDatos(listarEventos);
+
+  // Los hooks van SIEMPRE arriba, antes de cualquier `return` condicional.
+  const primeraVez = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (primeraVez.current) {
+        primeraVez.current = false; // la primera carga ya la hizo useDatos
+        return;
+      }
+      void refrescar(); // al volver de otra pantalla, se actualiza
+    }, [refrescar]),
+  );
 
   if (cargando && datos === null) {
     return (
@@ -46,7 +59,11 @@ export default function ListaEventos() {
       ListHeaderComponent={
         error !== null ? <ThemedText style={styles.aviso}>{error}</ThemedText> : undefined
       }
-      ListEmptyComponent={<ThemedText style={styles.centrarTexto}>Aún no hay eventos.</ThemedText>}
+      ListEmptyComponent={
+        <ThemedText style={styles.centrarTexto}>
+          Aún no hay eventos. Toca «Nuevo» para crear el primero.
+        </ThemedText>
+      }
     />
   );
 }
