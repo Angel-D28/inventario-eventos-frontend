@@ -28,6 +28,7 @@ export default function EventosLayout() {
         name="producto-evento"
         options={{ title: 'Producto del evento', presentation: 'modal' }}
       />
+      <Stack.Screen name="foto" options={{ title: 'Foto', presentation: 'modal' }} />
     </Stack>
   );
 }

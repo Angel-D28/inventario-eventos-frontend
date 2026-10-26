@@ -42,3 +42,12 @@ export function normalizar(texto: string): string {
     .replace(/ñ/g, 'n')
     .trim();
 }
+
+/** Instante ISO (UTC) → "25 oct 2026, 22:03" en la hora LOCAL del teléfono. */
+export function formatearFechaHora(iso: string): string {
+  const fecha = new Date(iso);
+  if (Number.isNaN(fecha.getTime())) return iso;
+  const hora = String(fecha.getHours()).padStart(2, '0');
+  const minutos = String(fecha.getMinutes()).padStart(2, '0');
+  return `${fecha.getDate()} ${MESES[fecha.getMonth()] ?? ''} ${fecha.getFullYear()}, ${hora}:${minutos}`;
+}

@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-
+import { BotonFoto } from '@/components/boton-foto';
 import { CampoTexto } from '@/components/campo-texto';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -242,6 +242,7 @@ function FormularioCantidad({
   const [intento, setIntento] = useState(false);
   const [trabajando, setTrabajando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fotosSubidas, setFotosSubidas] = useState(0);
 
   const valor = parsearCantidad(cantidad);
   const errorCantidad = valor === null ? 'Escribe una cantidad mayor que cero' : null;
@@ -323,6 +324,22 @@ function FormularioCantidad({
       />
 
       {error !== null && <ThemedText style={styles.error}>{error}</ThemedText>}
+      {item !== null && (
+        <View style={styles.seccion}>
+          <BotonFoto
+            eventoId={eventoId}
+            momento="RECEPCION"
+            productoId={producto.id}
+            etiqueta="Foto de este producto"
+            alSubir={() => setFotosSubidas((n) => n + 1)}
+          />
+          {fotosSubidas > 0 && (
+            <ThemedText type="small" themeColor="textSecondary">
+              Fotos de este producto subidas ahora: {fotosSubidas}
+            </ThemedText>
+          )}
+        </View>
+      )}
 
       <Pressable
         style={[styles.botonPrimario, trabajando && styles.inactivo]}
