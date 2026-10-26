@@ -1,6 +1,13 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useRef } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 
 import { EstadoEventoBadge } from '@/components/estado-evento';
 import { ThemedText } from '@/components/themed-text';
@@ -11,9 +18,22 @@ import { ETIQUETA_TIPO, formatearFecha } from '@/lib/formato';
 import { useDatos } from '@/lib/use-datos';
 
 export default function DetalleEvento() {
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const cargador = useCallback(() => obtenerEvento(id), [id]);
   const { datos: evento, error, cargando, refrescando, recargar, refrescar } = useDatos(cargador);
+
+  // Los hooks van SIEMPRE arriba, antes de cualquier `return` condicional.
+  const primeraVez = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (primeraVez.current) {
+        primeraVez.current = false;
+        return;
+      }
+      void refrescar(); // al volver de agregar o editar un producto
+    }, [refrescar]),
+  );
 
   if (cargando && evento === null) {
     return (
@@ -35,6 +55,7 @@ export default function DetalleEvento() {
   }
 
   const conDevolucion = evento.estado !== 'PLANEADO';
+  const puedeEditar = evento.estado === 'PLANEADO';
 
   return (
     <>
@@ -54,31 +75,66 @@ export default function DetalleEvento() {
           <Dato etiqueta="Planeador" valor={evento.planeadorNombre} />
         </ThemedView>
 
-        <ThemedText type="smallBold">Productos ({evento.items.length})</ThemedText>
+        <View style={styles.encabezadoSeccion}>
+          <ThemedText type="smallBold">Productos ({evento.items.length})</ThemedText>
+          {puedeEditar && (
+            <Pressable
+              style={styles.botonAgregar}
+              onPress={() =>
+                router.push({ pathname: '/producto-evento', params: { eventoId: evento.id } })
+              }>
+              <ThemedText type="small" style={styles.textoAgregar}>
+                + Agregar producto
+              </ThemedText>
+            </Pressable>
+          )}
+        </View>
+
         {evento.items.length === 0 && (
           <ThemedText type="small" themeColor="textSecondary">
             Todavía no hay productos registrados.
           </ThemedText>
         )}
+        {puedeEditar && evento.items.length > 0 && (
+          <ThemedText type="small" themeColor="textSecondary">
+            Toca un producto para cambiar su cantidad o quitarlo.
+          </ThemedText>
+        )}
 
         {evento.items.map((item) => (
-          <ThemedView key={item.productoId} type="backgroundElement" style={styles.bloque}>
-            <ThemedText type="smallBold">{item.productoNombre}</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {ETIQUETA_TIPO[item.tipo]} · Recibidas: {item.cantidadRecibida}
-            </ThemedText>
-            {conDevolucion && (
-              <ThemedText type="small">
-                Devueltas {item.cantidadDevuelta} · Rotas {item.cantidadRota} · Perdidas{' '}
-                {item.cantidadPerdida} · Consumidas {item.cantidadConsumida}
+          <Pressable
+            key={item.productoId}
+            disabled={!puedeEditar}
+            onPress={() =>
+              router.push({
+                pathname: '/producto-evento',
+                params: { eventoId: evento.id, productoId: item.productoId },
+              })
+            }
+            style={({ pressed }) => pressed && styles.pulsada}>
+            <ThemedView type="backgroundElement" style={styles.bloque}>
+              <ThemedText type="smallBold">{item.productoNombre}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {ETIQUETA_TIPO[item.tipo]} · Recibidas: {item.cantidadRecibida}
               </ThemedText>
-            )}
-            {conDevolucion && item.diferencia !== 0 && (
-              <ThemedText type="small" style={styles.aviso}>
-                Sin cuadrar: {item.diferencia}
-              </ThemedText>
-            )}
-          </ThemedView>
+              {item.observaciones !== null && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {item.observaciones}
+                </ThemedText>
+              )}
+              {conDevolucion && (
+                <ThemedText type="small">
+                  Devueltas {item.cantidadDevuelta} · Rotas {item.cantidadRota} · Perdidas{' '}
+                  {item.cantidadPerdida} · Consumidas {item.cantidadConsumida}
+                </ThemedText>
+              )}
+              {conDevolucion && item.diferencia !== 0 && (
+                <ThemedText type="small" style={styles.aviso}>
+                  Sin cuadrar: {item.diferencia}
+                </ThemedText>
+              )}
+            </ThemedView>
+          </Pressable>
         ))}
       </ScrollView>
     </>
@@ -120,4 +176,18 @@ const styles = StyleSheet.create({
   aviso: { color: '#d93025' },
   bloque: { padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.one },
   dato: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.two },
+  encabezadoSeccion: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  botonAgregar: {
+    borderWidth: 1,
+    borderColor: '#2f6fed',
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+  },
+  textoAgregar: { color: '#2f6fed' },
+  pulsada: { opacity: 0.7 },
 });

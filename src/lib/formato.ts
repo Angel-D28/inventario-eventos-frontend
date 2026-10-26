@@ -29,3 +29,16 @@ export function aIsoLocal(fecha: Date): string {
   const dia = String(fecha.getDate()).padStart(2, '0');
   return `${fecha.getFullYear()}-${mes}-${dia}`;
 }
+
+/** Para comparar textos al buscar: minúsculas y sin tildes ("Champaña" → "champana"). */
+export function normalizar(texto: string): string {
+  return texto
+    .toLowerCase()
+    .replace(/[áàäâ]/g, 'a')
+    .replace(/[éèëê]/g, 'e')
+    .replace(/[íìïî]/g, 'i')
+    .replace(/[óòöô]/g, 'o')
+    .replace(/[úùüû]/g, 'u')
+    .replace(/ñ/g, 'n')
+    .trim();
+}

@@ -24,6 +24,10 @@ export default function EventosLayout() {
       />
       <Stack.Screen name="evento/[id]" options={{ title: 'Evento' }} />
       <Stack.Screen name="nuevo" options={{ title: 'Nuevo evento', presentation: 'modal' }} />
+      <Stack.Screen
+        name="producto-evento"
+        options={{ title: 'Producto del evento', presentation: 'modal' }}
+      />
     </Stack>
   );
 }

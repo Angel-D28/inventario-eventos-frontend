@@ -115,6 +115,37 @@ export function listarProductos(): Promise<Producto[]> {
   return solicitar<Producto[]>('/api/productos');
 }
 
+// ---------- Crear productos ----------
+
+export type NuevoProducto = { nombre: string; tipo: TipoProducto };
+
+export function crearProducto(datos: NuevoProducto): Promise<Producto> {
+  return solicitar<Producto>('/api/productos', { metodo: 'POST', cuerpo: datos });
+}
+
+// ---------- Productos de un evento ----------
+
+function rutaItem(eventoId: string, productoId: string): string {
+  return `/api/eventos/${encodeURIComponent(eventoId)}/items/${encodeURIComponent(productoId)}`;
+}
+
+/** Crea el producto en el evento o, si ya está, actualiza su cantidad. */
+export function registrarItem(
+  eventoId: string,
+  productoId: string,
+  cantidadRecibida: number,
+  observaciones: string | null,
+): Promise<EventoItem> {
+  return solicitar<EventoItem>(rutaItem(eventoId, productoId), {
+    metodo: 'PUT',
+    cuerpo: { cantidadRecibida, observaciones },
+  });
+}
+
+export function quitarItem(eventoId: string, productoId: string): Promise<void> {
+  return solicitar<void>(rutaItem(eventoId, productoId), { metodo: 'DELETE' });
+}
+
 // ---------- Eventos ----------
 
 export type EstadoEvento = 'PLANEADO' | 'RECIBIDO' | 'DEVUELTO' | 'CERRADO';
